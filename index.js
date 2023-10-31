@@ -29,7 +29,7 @@ app.post("/todo", async (req, res) => {
   await client.connect();
 
   const maxIdTodo = await client
-    .db("todos-collection")
+    .db("todos-data")
     .collection("todos")
     .find()
     .toArray();
@@ -39,7 +39,7 @@ app.post("/todo", async (req, res) => {
   const todo = req.body;
   todo.id = maxId + 1;
 
-  await client.db("todos-collection").collection("todos").insertOne(todo);
+  await client.db("todos-data").collection("todos").insertOne(todo);
 
   res.send({
     success: true,
@@ -76,22 +76,29 @@ app.put("/todo/:id", async (req, res) => {
 // Delete Api
 app.delete("/todo/:id", async (req, res) => {
   await client.connect();
-  const id = parseInt(req.params.id);
+  const todoIdToDelete = parseInt(req.params.id);
+
   const deleted = await client
     .db("todos-data")
     .collection("todos")
-    .deleteOne({ id });
+    .deleteOne({ id: todoIdToDelete });
+
   if (deleted.deletedCount === 0) {
-    res.send({
+    res.status(404).send({
       success: false,
-      message: "Could not delete todo",
+      message: "Todo not found",
     });
   } else {
     res.send({
       success: true,
+      message: "Todo deleted successfully",
     });
   }
+
+  // Close the MongoDB connection to release resources
+  await client.close();
 });
+
 
 const port = 3000;
 
