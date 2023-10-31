@@ -11,7 +11,7 @@ app.get("/", (req, res) => {
 });
 
 // Get APi
-app.get("/todo", async (req, res) => {
+app.get("/todo/all", async (req, res) => {
   await client.connect();
   const todos = await client
     .db("todos-data")
@@ -25,28 +25,28 @@ app.get("/todo", async (req, res) => {
 });
 
 // Post Api
-app.post("/todo/:id", async (req, res) => {
+app.post("/todo", async (req, res) => {
   await client.connect();
 
-  const todoCount = await client
-    .db("todos-data")
+  const maxIdTodo = await client
+    .db("todos-collection")
     .collection("todos")
-    .countDocuments({});
+    .find()
+    .toArray();
+
+  const maxId = maxIdTodo.length > 0 ? maxIdTodo[0].id : 0;
 
   const todo = req.body;
-  todo.id = todoCount + 1;
+  todo.id = maxId + 1;
 
-  const db = await client
-    .db("todos-data")
-    .collection("todos")
-    .insertOne(todo);
+  await client.db("todos-collection").collection("todos").insertOne(todo);
 
-  const result = db.ops[0];
   res.send({
-    success: !!db,
-    result,
+    success: true,
+    todo,
   });
 });
+
 
 // Update Api
 app.put("/todo/:id", async (req, res) => {
